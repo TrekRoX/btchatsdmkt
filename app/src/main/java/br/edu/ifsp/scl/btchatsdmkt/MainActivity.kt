@@ -2,9 +2,12 @@ package br.edu.ifsp.scl.btchatsdmkt
 
 import android.Manifest
 import android.app.Activity
+import android.app.AlertDialog
 import android.app.ProgressDialog
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothSocket
+import android.content.DialogInterface
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
@@ -16,6 +19,7 @@ import android.support.v4.app.ActivityCompat
 import android.support.v4.content.PermissionChecker
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import br.edu.ifsp.scl.btchatsdmkt.BluetoothSingleton.Constantes.ATIVA_BLUETOOTH
@@ -25,7 +29,9 @@ import br.edu.ifsp.scl.btchatsdmkt.BluetoothSingleton.Constantes.MENSAGEM_TEXTO
 import br.edu.ifsp.scl.btchatsdmkt.BluetoothSingleton.Constantes.REQUER_PERMISSOES_LOCALIZACAO
 import br.edu.ifsp.scl.btchatsdmkt.BluetoothSingleton.Constantes.TEMPO_DESCOBERTA_SERVICO_BLUETOOTH
 import br.edu.ifsp.scl.btchatsdmkt.BluetoothSingleton.adaptadorBt
+import br.edu.ifsp.scl.btchatsdmkt.BluetoothSingleton.outputStream
 import kotlinx.android.synthetic.main.activity_main.*
+import java.io.IOException
 
 class  MainActivity : AppCompatActivity() {
     // Referências para as threads filhas
@@ -124,6 +130,8 @@ class  MainActivity : AppCompatActivity() {
         when (item?.itemId) {
             R.id.modoClienteMenuItem -> {
                 toast("Configurando modo cliente")
+                // (Re)Inicializando a Lista de dispositivos encontrados
+                listaBtsEncontrados = mutableListOf()
 
                 registraReceiver()
 
@@ -164,6 +172,109 @@ class  MainActivity : AppCompatActivity() {
             }, tempo * 1000L)
         }
     }
+    private fun onCancelDialog(dialogInterface: DialogInterface){
+        //Fianalizando a busca por servidores
+        adaptadorBt?.cancelDiscovery()
+
+        paraThreadFilhas()
+
+    }
+
+    private fun paraThreadFilhas(){
+        if(threadComunicacao != null){
+            threadComunicacao?.parar()
+            threadComunicacao = null
+        }
+
+        if(threadCliente != null){
+            threadCliente?.parar()
+            threadCliente = null
+        }
+
+        if(threadServidor != null){
+            threadServidor?.parar()
+            threadServidor = null
+        }
+    }
+
+    override fun onDestroy() {
+        //Desregistrar o receiver
+        desregistraReceiver()
+
+        //Parar todas threads filhas
+        paraThreadFilhas()
+
+        super.onDestroy()
+    }
+
+    private fun iniciaThreadServidor(){
+        paraThreadFilhas()
+        exibirAguardeDialog("Aguardando conexões", TEMPO_DESCOBERTA_SERVICO_BLUETOOTH)
+        threadServidor = ThreadServidor(this)
+        threadServidor?.iniciar()
+    }
+
+    private fun iniciaThreadCliente(i:Int){
+        paraThreadFilhas()
+
+        threadCliente = ThreadCliente(this)
+        threadCliente?.iniciar(listaBtsEncontrados?.get(i))
+    }
+
+    fun exibirDispositivosEncontrados(){
+        aguardeDialog?.dismiss()
+
+        val listaNomeBtsEncontrados: MutableList<String> = mutableListOf()
+        listaBtsEncontrados?.forEach{ listaNomeBtsEncontrados.add(if(it.name == null) "Sem nome" else it.name)}
+
+        val escolhaDispositivoDialog = with(AlertDialog.Builder(this)){
+            setTitle("Dispositivos encontrados")
+            setSingleChoiceItems(listaNomeBtsEncontrados.toTypedArray(),
+                -1
+            ) { dialog, which ->  trataSelecaoServidor(dialog, which)}
+        }
+
+        escolhaDispositivoDialog.show()
+    }
+
+    private fun trataSelecaoServidor(dialog: DialogInterface, which: Int){
+        iniciaThreadCliente(which)
+
+        adaptadorBt?.cancelDiscovery()
+
+        dialog.dismiss()
+    }
+
+    fun enviarMensagem(view: View){
+        if(view == enviarBt){
+            val mensagem = mensagemEditText.text.toString()
+            mensagemEditText.setText("")
+
+
+            try {
+                if(outputStream != null)
+                {
+                    outputStream?.writeUTF(mensagem)
+                    historicoAdapter?.add("Eu: ${mensagem}")
+                    historicoAdapter?.notifyDataSetChanged()
+                }
+            }
+            catch (e: IOException)
+            {
+                mHandler?.obtainMessage(MENSAGEM_DESCONEXAO, e.message + "[0]")?.sendToTarget()
+
+                e.printStackTrace()
+            }
+
+        }
+    }
+
+    fun trataSocket(socket:BluetoothSocket?){
+        aguardeDialog?.dismiss()
+        threadComunicacao = ThreadComunicacao(this)
+        threadComunicacao?.iniciar(socket)
+    }
+
     private fun toast(mensagem: String) = Toast.makeText(this,mensagem,Toast.LENGTH_SHORT).show()
 
     inner class TelaPrincipalHandler: Handler() {

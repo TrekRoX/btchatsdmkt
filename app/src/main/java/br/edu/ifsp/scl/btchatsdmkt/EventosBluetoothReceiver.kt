@@ -14,9 +14,6 @@ class EventosBluetoothReceiver(val mainActivity: MainActivity): BroadcastReceive
             // Recupera o dispositivo encontrado
             val dispositivoEncontrado: BluetoothDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
 
-            // (Re)Inicializando a Lista de dispositivos encontrados
-            mainActivity.listaBtsEncontrados = mutableListOf()
-
             // Adiciona o dispositivo encontrado na Lista de dispositivos encontrados
             mainActivity.listaBtsEncontrados?.add(dispositivoEncontrado)
         } else {
