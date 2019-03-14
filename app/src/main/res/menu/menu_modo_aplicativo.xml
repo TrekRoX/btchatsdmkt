@@ -12,9 +12,14 @@
             android:title="Modo cliente"
             app:showAsAction="never"/>-->
 
-    <!--Modo cliente -->
+
     <item
             android:id="@+id/refreshMenuItem"
             android:title="Refresh"
+            app:showAsAction="never"/>
+
+    <item
+            android:id="@+id/nomeRemententeMenuItem"
+            android:title="Nome remetente"
             app:showAsAction="never"/>
 </menu>

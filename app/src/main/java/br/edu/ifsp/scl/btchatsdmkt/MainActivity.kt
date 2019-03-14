@@ -22,6 +22,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.ArrayAdapter
+import android.widget.EditText
 import android.widget.RadioButton
 import android.widget.Toast
 import br.edu.ifsp.scl.btchatsdmkt.BluetoothSingleton.Constantes.ATIVA_BLUETOOTH
@@ -57,6 +58,9 @@ class  MainActivity : AppCompatActivity() {
     //Indica modo de execucao
     var modoServidor: Boolean? = null
 
+    //Nome do remetente
+    var nomeRemetente = "Eu"
+
     // Dialog para aguardar conexões e busca
     private var aguardeDialog: ProgressDialog? = null
 
@@ -79,10 +83,10 @@ class  MainActivity : AppCompatActivity() {
                }
         }
 
-        showDialog()
+        showDialogModoOperacao()
     }
 
-    fun showDialog(){
+    fun showDialogModoOperacao(){
         //Inflando layout do dialog
         val optDialogView = LayoutInflater.from(this).inflate(R.layout.dialog_activity, null)
 
@@ -91,6 +95,7 @@ class  MainActivity : AppCompatActivity() {
 
         //Show do dialog
         val optDialog = optBuilder.show()
+        optDialog.setCanceledOnTouchOutside(false)
 
         //Eventos radio button dialog
         optDialog.radioServidor.setOnClickListener{ onRadioButtonOptClicked(view = it) }
@@ -106,6 +111,20 @@ class  MainActivity : AppCompatActivity() {
             else
                 toast( "Selecione um modo de operação")
         }
+    }
+
+    fun showDialogNomeRemetente()
+    {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Atualizar nome de remetente")
+        val dialogLayout = LayoutInflater.from(this).inflate(R.layout.dialog_nome_activity, null)
+        val editText  = dialogLayout.findViewById<EditText>(R.id.nomeRemententeEditText)
+        builder.setView(dialogLayout)
+        builder.setPositiveButton("SALVAR") { dialogInterface, i ->
+            nomeRemetente =  editText.text.toString()
+            Toast.makeText(applicationContext, "Nome de remetente alterado para: $nomeRemetente", Toast.LENGTH_SHORT).show()
+        }
+        builder.show()
     }
 
     fun inicializa()
@@ -193,6 +212,11 @@ class  MainActivity : AppCompatActivity() {
             }*/
             R.id.refreshMenuItem ->  {
                 inicializa()
+                retorno = true
+            }
+
+            R.id.nomeRemententeMenuItem ->  {
+                showDialogNomeRemetente()
                 retorno = true
             }
         }
@@ -330,7 +354,7 @@ class  MainActivity : AppCompatActivity() {
                 if(outputStream != null)
                 {
                     outputStream?.writeUTF(mensagem)
-                    historicoAdapter?.add("Eu: ${mensagem}")
+                    historicoAdapter?.add("${nomeRemetente}: ${mensagem}")
                     historicoAdapter?.notifyDataSetChanged()
                 }
             }
