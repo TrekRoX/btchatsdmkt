@@ -1,14 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
       xmlns:app="http://schemas.android.com/apk/res-auto">
-    <!--Modo servidor -->
+    <!--&lt;!&ndash;Modo servidor &ndash;&gt;
     <item
             android:id="@+id/modoServidorMenuItem"
             android:title="Modo servidor"
             app:showAsAction="never"/>
-    <!--Modo cliente -->
+    &lt;!&ndash;Modo cliente &ndash;&gt;
     <item
             android:id="@+id/modoClienteMenuItem"
             android:title="Modo cliente"
+            app:showAsAction="never"/>-->
+
+    <!--Modo cliente -->
+    <item
+            android:id="@+id/refreshMenuItem"
+            android:title="Refresh"
             app:showAsAction="never"/>
 </menu>
