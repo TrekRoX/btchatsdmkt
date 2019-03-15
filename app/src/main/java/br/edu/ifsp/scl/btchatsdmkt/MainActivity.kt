@@ -353,7 +353,7 @@ class  MainActivity : AppCompatActivity() {
             try {
                 if(outputStream != null)
                 {
-                    outputStream?.writeUTF(mensagem)
+                    outputStream?.writeUTF("${nomeRemetente}: ${mensagem}")
                     historicoAdapter?.add("${nomeRemetente}: ${mensagem}")
                     historicoAdapter?.notifyDataSetChanged()
                 }
